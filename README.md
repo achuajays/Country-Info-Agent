@@ -93,7 +93,7 @@ The application requires an API key to communicate with the Groq inference engin
    ```
 2. Open `.env` and paste your Groq API Key:
    ```env
-   GROQ_API_KEY=gsk_your_api_key_here
+   GROQ_API_KEY=your_api_key_here
    ```
 
 ### 3. Run the Server (Locally)

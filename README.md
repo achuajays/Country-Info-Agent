@@ -35,9 +35,9 @@ graph TD
     
     subgraph LangGraph Pipeline
         B --> C[1. Parse Intent Node]
-        C -->|JSON: {country, fields}| D{Valid Country?}
+        C -->|JSON: country, fields| D{Valid Country?}
         
-        D -->|Yes| E[2. Fetch Country Node<br/>async-lru Cache]
+        D -->|Yes| E[2. Fetch Country Node: async-lru]
         D -->|No| I[Short-circuit Route]
         
         E -->|httpx GET| F[(REST Countries API)]
@@ -92,7 +92,7 @@ The application requires an API key to communicate with the Groq inference engin
    GROQ_API_KEY=gsk_your_api_key_here
    ```
 
-### 3. Run the Server
+### 3. Run the Server (Locally)
 
 Start the ASGI server using Uvicorn:
 
@@ -103,7 +103,19 @@ uvicorn main:app --reload --port 8000
 
 *The `--reload` flag enables hot-reloading. Any changes to Python files will instantly restart the server.*
 
-### 4. Open the Interface
+### 4. Run via Docker (Recommended for Hosting)
+
+The project includes an optimized `Dockerfile` powered by `uv` for lightning-fast, reproducible builds.
+
+```bash
+# 1. Build the image
+docker build -t country-agent .
+
+# 2. Run the container (pass your API key)
+docker run -p 8000:8000 --env GROQ_API_KEY=your_key_here country-agent
+```
+
+### 5. Open the Interface
 Navigate your browser to:
 👉 **[http://localhost:8000](http://localhost:8000)**
 

@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# Virtual environments & Secrets
+.venv
+venv
+env
+.env
+
+# Python compilation files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+
+# Agent/Tool configs
+.agent
+.agents
+skills-lock.json
+
+# IDEs
+.idea/
+.vscode/
+*.swp

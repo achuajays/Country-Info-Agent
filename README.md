@@ -1,8 +1,10 @@
 <div align="center">
 
-![Country Information AI Agent Banner](banner.png)
 
 # 🌍 Country Information AI Agent
+
+![Country Information AI Agent Banner](banner.png)
+
 
 A highly scalable, production-grade AI agent that answers natural-language questions about countries worldwide. Powered by **LangGraph**, **Groq AI**, and **FastAPI**.
 

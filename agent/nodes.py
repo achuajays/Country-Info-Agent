@@ -141,46 +141,60 @@ async def parse_intent(state: AgentState) -> dict:
 # ===================================================================
 # Node 2: Fetch Country Data
 # ===================================================================
+from async_lru import alru_cache
+
+@alru_cache(maxsize=128)
+async def _do_httpx_fetch(country: str) -> dict:
+    """Cached raw API request."""
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
+        resp = await client.get(
+            f"{REST_COUNTRIES_BASE}/{country}",
+            params={"fullText": "false"},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
 async def fetch_country(state: AgentState) -> dict:
     """Call the REST Countries API and return raw data."""
     country = state["country"]
 
     try:
-        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
-            resp = await client.get(
-                f"{REST_COUNTRIES_BASE}/{country}",
-                params={"fullText": "false"},
-            )
+        data = await _do_httpx_fetch(country)
 
-            if resp.status_code == 404:
-                return {
-                    "api_data": None,
-                    "flag_url": "",
-                    "error": f"I couldn't find a country called '{country}'. Please check the spelling and try again.",
-                    "answer": f"I couldn't find a country called '{country}'. Please check the spelling and try again.",
-                }
+        # API returns a list; take the first (best) match
+        if isinstance(data, list) and len(data) > 0:
+            country_data = data[0]
+        else:
+            country_data = data
 
-            resp.raise_for_status()
-            data = resp.json()
+        # Extract flag URL
+        flag_url = ""
+        flags = country_data.get("flags", {})
+        if isinstance(flags, dict):
+            flag_url = flags.get("png", flags.get("svg", ""))
 
-            # API returns a list; take the first (best) match
-            if isinstance(data, list) and len(data) > 0:
-                country_data = data[0]
-            else:
-                country_data = data
+        return {
+            "api_data": country_data,
+            "flag_url": flag_url,
+            "error": None,
+        }
 
-            # Extract flag URL
-            flag_url = ""
-            flags = country_data.get("flags", {})
-            if isinstance(flags, dict):
-                flag_url = flags.get("png", flags.get("svg", ""))
-
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 404:
             return {
-                "api_data": country_data,
-                "flag_url": flag_url,
-                "error": None,
+                "api_data": None,
+                "flag_url": "",
+                "error": f"I couldn't find a country called '{country}'. Please check the spelling and try again.",
+                "answer": f"I couldn't find a country called '{country}'. Please check the spelling and try again.",
             }
-
+        logger.error("REST Countries API error: %s", exc)
+        return {
+            "api_data": None,
+            "flag_url": "",
+            "error": "The country data service is temporarily unavailable. Please try again later.",
+            "answer": "The country data service is temporarily unavailable. Please try again later.",
+        }
     except httpx.TimeoutException:
         logger.error("REST Countries API timeout for: %s", country)
         return {
@@ -189,8 +203,8 @@ async def fetch_country(state: AgentState) -> dict:
             "error": "The country data service is taking too long to respond. Please try again in a moment.",
             "answer": "The country data service is taking too long to respond. Please try again in a moment.",
         }
-    except httpx.HTTPError as exc:
-        logger.error("REST Countries API error: %s", exc)
+    except Exception as exc:
+        logger.error("REST Countries API generic error: %s", exc)
         return {
             "api_data": None,
             "flag_url": "",

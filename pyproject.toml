@@ -12,4 +12,5 @@ dependencies = [
     "langgraph>=1.0.10",
     "python-dotenv>=1.2.2",
     "uvicorn[standard]>=0.41.0",
+    "async-lru>=2.0.4",
 ]
